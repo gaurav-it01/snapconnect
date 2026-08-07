@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block main %}
+<div class="h-full flex flex-col bg-white overflow-y-auto">
+  <div
+    class="absolute top-0 left-0 right-0 z-20 px-3 pt-3 pb-2 bg-white border-b border-neutral-100 flex items-center gap-3">
+    <a href="{% url 'profile' %}" class="size-8 flex items-center justify-center rounded-full hover:bg-neutral-100">
+      <i class="fa-solid fa-chevron-left text-black"></i>
+    </a>
+    <h1 class="page-title">Change Avatar</h1>
+  </div>
+
+  <main class="mt-[60px] px-3 pb-6">
+    <div class="flex flex-col items-center pt-3 pb-5">
+      <div id="avatar-preview"
+        class="w-20 h-20 rounded-full overflow-hidden bg-neutral-200 ring-2 ring-violet-500 ring-offset-2">
+        <img id="preview-img" src="{{ request.user.avatar.url }}" alt="{{ request.user.username }}"
+          class="object-cover w-full h-full">
+      </div>
+      <p class="item-meta mt-3 text-center">Choose a new photo for your profile</p>
+    </div>
+
+    <form action="{% url 'change-avatar' %}" method="post" enctype="multipart/form-data" class="space-y-3">
+      {% csrf_token %}
+
+      {% if form.avatar.errors %}
+      <div class="rounded-2xl bg-red-50 text-red-600 text-xs px-4 py-3">
+        {% for error in form.avatar.errors %}{{ error }}{% endfor %}
+      </div>
+      {% endif %}
+
+      <div>
+        <label for="avatar-input" class="field-label ml-3 mb-1.5 block">New photo</label>
+        <input type="file" name="avatar" id="avatar-input" accept="image/*" required
+          class="w-full border-0 outline-none text-sm file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-neutral-100 file:text-sm file:font-semibold">
+      </div>
+
+      <div class="space-y-2 pt-4">
+        <button type="submit"
+          class="btn btn-sm w-full rounded-full border-0 bg-black hover:bg-neutral-800 text-white font-semibold h-10">
+          Save Avatar
+        </button>
+        <a href="{% url 'profile' %}"
+          class="btn btn-sm w-full rounded-full border border-neutral-200 bg-white text-black font-semibold h-10">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </main>
+</div>
+
+<script>
+  const input = document.getElementById("avatar-input");
+  const preview = document.getElementById("preview-img");
+  if (input && preview) {
+    input.addEventListener("change", () => {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      preview.src = URL.createObjectURL(file);
+    });
+  }
+</script>
+{% endblock %}

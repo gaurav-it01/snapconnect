@@ -1,0 +1,10 @@
+<div class="avatar shrink-0">
+  <div
+    class="{{ box }} rounded-full overflow-hidden bg-[#FFFC00] {% if ring and ring != 'False' %}ring-2 ring-[#FFFC00] ring-offset-2 ring-offset-white{% endif %}">
+    {% if user.avatar and user.avatar.name != 'snaps/default.jpg' %}
+    <img src="{{ user.avatar.url }}" alt="{{ user.username }}" class="object-cover w-full h-full" />
+    {% else %}
+    <img src="{{ src }}" alt="{{ user.username }}" class="object-cover w-full h-full" />
+    {% endif %}
+  </div>
+</div>

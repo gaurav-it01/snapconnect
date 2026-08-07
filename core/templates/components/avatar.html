@@ -1,0 +1,37 @@
+{% if size == 'xl' %}
+{% with box='w-28 h-28' %}
+<div class="avatar shrink-0">
+  <div
+    class="{{ box }} rounded-full overflow-hidden bg-neutral-200 {% if ring == 'yes' %}ring-2 ring-violet-500 ring-offset-2 ring-offset-white{% endif %}">
+    <img src="{{ user.avatar.url }}" alt="{{ user.username }}" class="object-cover w-full h-full" />
+  </div>
+</div>
+{% endwith %}
+{% elif size == 'lg' %}
+{% with box='w-14 h-14' %}
+<div class="avatar shrink-0">
+  <div
+    class="{{ box }} rounded-full overflow-hidden bg-neutral-200 {% if ring == 'yes' %}ring-2 ring-violet-500 ring-offset-2 ring-offset-white{% endif %}">
+    <img src="{{ user.avatar.url }}" alt="{{ user.username }}" class="object-cover w-full h-full" />
+  </div>
+</div>
+{% endwith %}
+{% elif size == 'sm' %}
+{% with box='w-8 h-8' %}
+<div class="avatar shrink-0">
+  <div
+    class="{{ box }} rounded-full overflow-hidden bg-neutral-200 {% if ring == 'yes' %}ring-2 ring-violet-500 ring-offset-2 ring-offset-white{% endif %}">
+    <img src="{{ user.avatar.url }}" alt="{{ user.username }}" class="object-cover w-full h-full" />
+  </div>
+</div>
+{% endwith %}
+{% else %}
+{% with box='w-11 h-11' %}
+<div class="avatar shrink-0">
+  <div
+    class="{{ box }} rounded-full overflow-hidden bg-neutral-200 {% if ring == 'yes' %}ring-2 ring-violet-500 ring-offset-2 ring-offset-white{% endif %}">
+    <img src="{{ user.avatar.url }}" alt="{{ user.username }}" class="object-cover w-full h-full" />
+  </div>
+</div>
+{% endwith %}
+{% endif %}

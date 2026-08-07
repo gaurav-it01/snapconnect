@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block main %}
+<div class="h-full flex flex-col bg-neutral-950 text-white relative">
+  <!-- Header -->
+  <div class="absolute top-0 left-0 right-0 z-20 px-3 pt-3 pb-2 bg-neutral-950/85 backdrop-blur-md border-b border-neutral-900 flex items-center justify-between">
+    <div class="flex items-center gap-2.5">
+      <a href="{% url 'home' %}" class="size-8 flex items-center justify-center rounded-full bg-neutral-800 hover:bg-neutral-700 transition-colors text-white cursor-pointer border-0">
+        <i class="fa-solid fa-chevron-left text-sm"></i>
+      </a>
+      <a href="{% url 'profile' %}" class="relative">
+        {% include 'components/avatar.html' with user=request.user size='sm' %}
+      </a>
+      <h1 class="page-title text-white">Spotlight</h1>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="{% url 'profile' %}" class="size-8 flex justify-center items-center rounded-full bg-neutral-800 hover:bg-neutral-700 transition-colors">
+        <i class="fa-solid fa-plus text-sm text-white"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- Content (Reels feed) -->
+  <div class='mt-[50px] h-149 overflow-y-auto mb-[70px] overflow-hidden snap-y snap-mandatory scroll-smooth scrollbar-none'>
+    <main class="flex-1 pb-28 ">
+      {% if spotlights %}
+        {% for sp in spotlights %}
+        <div class="relative w-full h-149  snap-start bg-black flex items-center justify-center overflow-hidden border-b border-neutral-900">
+          <!-- Media Container -->
+          <div class="absolute h-149   inset-0 z-0 flex items-center justify-center">
+            {% if '.mp4' in sp.file.name or '.webm' in sp.file.name or '.mov' in sp.file.name or '.ogg' in sp.file.name %}
+              <video src="{{ sp.file.url }}" autoplay loop muted playsinline class="w-full h-full  object-contain"></video>
+            {% else %}
+              <img src="{{ sp.file.url }}" alt="{{ sp.title }}" class="w-full h-full object-contain">
+            {% endif %}
+          </div>
+          <!-- Overlay Details -->
+            <div class="absolute  h-149 overflow-hidden  inset-0 z-10 bg-gradient-to-t from-black/80 via-transparent to-black/30 flex flex-col justify-between p-4">
+            <!-- Top bar -->
+            <div class="flex justify-between items-start pt-1">
+    
+            </div>
+            <!-- Bottom bar details -->
+            <div class="space-y-3 ">
+              <div class="flex items-center gap-2.5">
+                <div class="size-9 rounded-full overflow-hidden border-2 border-white/60 bg-neutral-800 shadow-md">
+                  <img src="{{ sp.user.avatar.url }}" alt="avatar" class="w-full h-full object-cover">
+                </div>
+                <div>
+                  <p class="text-sm font-semibold text-white drop-shadow-md">
+                    {{ sp.user.username }}
+                  </p>
+                  <p class="text-[10px] text-neutral-300 drop-shadow-sm">
+                    {{ sp.created_at|timesince }} ago
+                  </p>
+                </div>
+              </div>
+    
+              <div>
+                <h4 class="text-sm font-medium text-white drop-shadow-md pr-12">{{ sp.title }}</h4>
+              </div>
+            </div>
+          </div> 
+        </div>
+        {% endfor %}
+      {% else %}
+        <!-- Empty state -->
+        <div class="h-full flex flex-col items-center justify-center text-center px-8 pt-24 pb-12">
+          <div class="w-16 h-16 rounded-full bg-neutral-900 flex items-center justify-center mb-4 border border-neutral-800 shadow-inner">
+            <i class="fa-solid fa-circle-play text-2xl text-neutral-600"></i>
+          </div>
+          <h3 class="item-title text-white">No Spotlight Snaps</h3>
+          <p class="item-meta mt-1.5 text-neutral-500">Post your captures to Spotlight to show up here!</p>
+          <a href="{% url 'camera' %}" class="btn btn-sm mt-6 rounded-full border-0 bg-[#FFFC00] hover:bg-[#F5F000] text-black font-bold px-6 shadow-lg">
+            Open Camera
+          </a>
+        </div>
+      {% endif %}
+    </main>
+  </div>
+
+  {% include 'components/bottom-navbar.html' %}
+</div>
+{% endblock %}

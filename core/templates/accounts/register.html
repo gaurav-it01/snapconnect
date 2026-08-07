@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block main %}
+<div class="h-full flex flex-col bg-white overflow-y-auto">
+  <div class="px-6 pt-12 pb-4 flex flex-col items-center">
+    <div class="w-14 h-14 rounded-full bg-[#FFFC00] flex items-center justify-center mb-3">
+      <i class="fa-brands fa-snapchat text-2xl text-black"></i>
+    </div>
+    <h1 class="text-2xl font-semibold text-black">Sign Up</h1>
+    <p class="body-text mt-1 text-center">Create your Snapchat account</p>
+  </div>
+
+  <div class="px-6 pb-10 flex-1">
+    <form action="{% url 'register-user' %}" method="post" enctype="multipart/form-data" class="space-y-3.5" novalidate>
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+      <div class="rounded-2xl bg-red-50 text-red-600 text-xs px-4 py-3">
+        {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+      </div>
+      {% endif %}
+
+      <div>
+        <label for="id_username" class="field-label ml-3 mb-1.5 block">Username</label>
+        <input type="text" name="username" id="id_username" required autocomplete="username"
+          value="{{ form.username.value|default_if_none:'' }}" placeholder="Username"
+          class="w-full h-11 rounded-full bg-neutral-100 border-0 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-300">
+        {% for error in form.username.errors %}
+        <p class="text-xs text-red-500 mt-1 ml-3">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label for="id_password1" class="field-label ml-3 mb-1.5 block">Password</label>
+        <input type="password" name="password1" id="id_password1" required autocomplete="new-password"
+          placeholder="Password"
+          class="w-full h-11 rounded-full bg-neutral-100 border-0 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-300">
+        {% for error in form.password1.errors %}
+        <p class="text-xs text-red-500 mt-1 ml-3">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label for="id_password2" class="field-label ml-3 mb-1.5 block">Confirm password</label>
+        <input type="password" name="password2" id="id_password2" required autocomplete="new-password"
+          placeholder="Confirm password"
+          class="w-full h-11 rounded-full bg-neutral-100 border-0 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-300">
+        {% for error in form.password2.errors %}
+        <p class="text-xs text-red-500 mt-1 ml-3">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label for="id_avatar" class="field-label ml-3 mb-1.5 block">
+          Avatar <span class="font-normal text-neutral-400">(optional)</span>
+        </label>
+        <input type="file" name="avatar" id="id_avatar" accept="image/*"
+          class="w-full border-0 outline-none text-sm file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-neutral-100 file:text-sm file:font-semibold">
+        {% for error in form.avatar.errors %}
+        <p class="text-xs text-red-500 mt-1 ml-3">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <button type="submit"
+        class="btn btn-sm w-full rounded-full border-0 bg-black hover:bg-neutral-800 text-white font-semibold h-11 mt-1">
+        Sign Up
+      </button>
+    </form>
+
+    <p class="text-center body-text mt-6">
+      Already have an account?
+      <a href="{% url 'login' %}" class="font-semibold text-black">Log In</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

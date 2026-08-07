@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block main %}
+
+<div class="h-full flex flex-col bg-white">
+    <div class="absolute top-0 left-0 right-0 z-20 px-3 pt-3 pb-2 bg-white border-b border-neutral-100">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <a href="{% url 'profile' %}" class="relative">
+                    {% include 'components/avatar.html' with user=request.user size='sm' %}
+                </a>
+                <a href="{% url 'search-users' %}"
+                    class="size-8 flex justify-center items-center rounded-full bg-neutral-100">
+                    <i class="fa-solid fa-magnifying-glass text-sm text-neutral-700"></i>
+                </a>
+            </div>
+
+            <h1 class="page-title">Chat</h1>
+
+            <div class="flex items-center gap-2">
+                <a href="{% url 'friend-requests' %}" class="size-8 flex justify-center items-center rounded-full bg-neutral-100">
+                    <i class="fa-regular fa-bell text-sm text-neutral-700"></i>
+                </a>
+                
+                  <button class="size-8 bg-[#FFFC00] flex justify-center items-center rounded-full">
+                    <i class="fa-solid fa-user-plus text-sm text-black"></i>
+                  </button>
+            </div>
+        </div>
+    </div>
+
+    <main class="flex-1 overflow-y-auto mt-[60px] px-3 pb-24">
+        {% if chats %}
+        <div class="space-y-0.5">
+            {% for friend, chat, last_message_text, last_message_obj in chats %}
+            <a href="{% url 'chat-details' chat.id %}"
+                class="flex items-center px-2 py-3 rounded-xl hover:bg-neutral-50 transition-colors">
+                <div class="flex items-center gap-3 min-w-0 flex-1">
+                    {% include 'components/avatar.html' with user=friend size='md' ring='yes' %}
+                    <div class="min-w-0">
+                        <h2 class="item-title truncate">{{ friend.username }}</h2>
+                        <p class="flex items-center gap-1.5 mt-0.5">
+                            {% if last_message_obj %}
+                                {% if last_message_obj.image %}
+                                    {% if last_message_obj.sender == request.user %}
+                                        {% if last_message_obj.is_viewed %}
+                                            <i class="fa-regular fa-square text-red-500 text-[10px]"></i>
+                                        {% else %}
+                                            <i class="fa-solid fa-square-caret-right text-red-500 text-[10px]"></i>
+                                        {% endif %}
+                                    {% else %}
+                                        {% if last_message_obj.is_viewed %}
+                                            <i class="fa-regular fa-square text-red-500 text-[10px]"></i>
+                                        {% else %}
+                                            <i class="fa-solid fa-square text-red-500 text-[10px]"></i>
+                                        {% endif %}
+                                    {% endif %}
+                                {% else %}
+                                    {% if last_message_obj.sender == request.user %}
+                                        <i class="fa-solid fa-square-caret-right text-blue-500 text-[10px]"></i>
+                                    {% else %}
+                                        <i class="fa-solid fa-square text-blue-500 text-[10px]"></i>
+                                    {% endif %}
+                                {% endif %}
+                            {% else %}
+                                <i class="fa-regular fa-comment text-neutral-300 text-[10px]"></i>
+                            {% endif %}
+                            <span class="item-meta max-w-[12ch] truncate">{{ last_message_text }}</span>
+                            <span class="size-1 rounded-full bg-neutral-300"></span>
+                            <span class="item-meta">{% if last_message_obj %}{{ last_message_obj.created_at|timesince }} ago{% else %}now{% endif %}</span>
+                            <span class="size-1 rounded-full bg-neutral-300"></span>
+                            <span class="item-meta">{{ chat.streak }}</span>
+                            <i class="fa-solid fa-fire fa-xs" style="color: rgb(241, 99, 47);"></i>
+                        </p>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="flex flex-col items-center justify-center pt-24 px-8 text-center">
+            <div class="w-14 h-14 rounded-full bg-neutral-100 flex items-center justify-center mb-4">
+                <i class="fa-solid fa-comment text-xl text-neutral-400"></i>
+            </div>
+            <h3 class="item-title">No chats yet</h3>
+            <p class="item-meta mt-1">Search friends and send an invite</p>
+            <a href="{% url 'search-users' %}"
+                class="btn btn-sm mt-5 rounded-full border-0 bg-black text-white font-semibold px-6">
+                Find Friends
+            </a>
+        </div>
+        {% endif %}
+    </main>
+
+    {% include 'components/bottom-navbar.html' %}
+</div>
+{% endblock %}

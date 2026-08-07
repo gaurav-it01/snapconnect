@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block main %}
+<style>
+  .filter-grayscale { filter: grayscale(100%); -webkit-filter: grayscale(100%); }
+  .filter-sepia { filter: sepia(100%); -webkit-filter: sepia(100%); }
+  .filter-warm { filter: sepia(30%) saturate(140%) contrast(110%); -webkit-filter: sepia(30%) saturate(140%) contrast(110%); }
+  .filter-cool { filter: hue-rotate(30deg) saturate(120%) contrast(90%); -webkit-filter: hue-rotate(30deg) saturate(120%) contrast(90%); }
+</style>
+
+<div class="h-full bg-black flex flex-col justify-between relative">
+    <div class="relative z-20 flex justify-between items-center px-4 pt-5 text-white">
+        <button type="button" onclick="goBack()"
+            class="size-10 rounded-full bg-black/35 flex items-center justify-center backdrop-blur-sm border-0 cursor-pointer">
+            <i class="fa-solid fa-chevron-down text-lg"></i>
+        </button>
+        <div class="flex gap-3">
+            <button type="button"
+                class="size-10 rounded-full bg-black/35 flex items-center justify-center backdrop-blur-sm border-0">
+                <i class="fa-solid fa-bolt text-lg"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Camera Container and Caption Input -->
+    <div id="camera-container" class="absolute inset-0 z-0 cursor-pointer">
+        <video id="video" autoplay playsinline muted class="w-full h-full object-cover transition-all"></video>
+        
+        <!-- Caption overlay input -->
+        <div id="caption-overlay-container" class="absolute inset-x-4 top-1/2 -translate-y-1/2 z-10 hidden">
+            <input type="text" id="caption-text-input" placeholder="Add a caption..." 
+                   class="w-full bg-black/60 text-white text-center py-2.5 px-4 rounded-md border-0 focus:ring-0 focus:outline-none placeholder-white/50 text-sm font-semibold">
+        </div>
+    </div>
+
+    <canvas id="canvas" class="hidden"></canvas>
+
+    <!-- Filters Row -->
+    <div id="filter-bar" class="absolute bottom-[125px] left-0 right-0 z-20 flex justify-center gap-2 overflow-x-auto px-4 py-2 scrollbar-none">
+        <button type="button" class="filter-btn px-3 py-1 text-xs rounded-full bg-[#FFFC00] text-black font-semibold border-0 cursor-pointer" data-filter="none">Normal</button>
+        <button type="button" class="filter-btn px-3 py-1 text-xs rounded-full bg-black/40 border border-white/20 text-white/70 font-medium cursor-pointer" data-filter="grayscale">B&W</button>
+        <button type="button" class="filter-btn px-3 py-1 text-xs rounded-full bg-black/40 border border-white/20 text-white/70 font-medium cursor-pointer" data-filter="sepia">Sepia</button>
+        <button type="button" class="filter-btn px-3 py-1 text-xs rounded-full bg-black/40 border border-white/20 text-white/70 font-medium cursor-pointer" data-filter="warm">Warm</button>
+        <button type="button" class="filter-btn px-3 py-1 text-xs rounded-full bg-black/40 border border-white/20 text-white/70 font-medium cursor-pointer" data-filter="cool">Cool</button>
+    </div>
+
+    <div id="capture-bar" class="absolute bottom-12 left-0 right-0 z-20 flex justify-center items-center">
+        <button type="button" id="capture"
+            class="size-[76px] rounded-full border-[5px] border-[#FFFC00] flex items-center justify-center p-0 cursor-pointer">
+            <span class="block size-[58px] rounded-full bg-white pointer-events-none"></span>
+        </button>
+    </div>
+
+    <div id="preview-actions" class="absolute bottom-12 left-0 right-0 z-20 flex items-center justify-between px-6"
+        style="display: none;">
+        <button type="button" id="retake"
+            class="size-12 rounded-full bg-black/45 text-white flex items-center justify-center backdrop-blur-sm border-0 cursor-pointer">
+            <i class="fa-solid fa-rotate-left"></i>
+        </button>
+
+        {% if selected_friend_id %}
+        <button type="submit" form="send-snap-form" id="send-direct"
+            class="h-12 pl-5 pr-4 rounded-full bg-[#FFFC00] text-black font-bold flex items-center gap-2 shadow-lg border-0 cursor-pointer">
+            Send
+            <i class="fa-solid fa-location-arrow rotate-45 text-sm"></i>
+        </button>
+        {% else %}
+        <button type="button" id="open-send-to"
+            class="h-12 pl-5 pr-4 rounded-full bg-[#FFFC00] text-black font-bold flex items-center gap-2 shadow-lg border-0 cursor-pointer">
+            Send To
+            <i class="fa-solid fa-location-arrow rotate-45 text-sm"></i>
+        </button>
+        {% endif %}
+    </div>
+
+    <form id="send-snap-form" action="{% url 'send-snap' %}" method="post"
+        class="{% if selected_friend_id %}{% else %}hidden{% endif %}">
+        {% csrf_token %}
+        <input type="hidden" name="image_data" id="image-data" value="">
+        {% if selected_friend_id %}
+        <input type="hidden" name="friend_ids" value="{{ selected_friend_id }}">
+        {% endif %}
+    </form>
+
+    {% if not selected_friend_id %}
+    <div id="send-to-sheet" class="absolute inset-0 z-30 bg-black/60 flex flex-col justify-end" style="display: none;">
+        <div class="bg-[#1a1a1a] rounded-t-3xl max-h-[80%] flex flex-col text-white overflow-hidden">
+            <div class="flex justify-center pt-3 pb-1">
+                <div class="w-10 h-1 rounded-full bg-white/25"></div>
+            </div>
+
+            <div class="flex items-center gap-3 px-4 py-3 border-b border-white/10">
+                <div id="snap-thumb"
+                    class="w-14 h-14 rounded-xl overflow-hidden bg-neutral-800 shrink-0 ring-2 ring-[#FFFC00]"></div>
+                <div class="min-w-0 flex-1">
+                    <p class="text-sm font-semibold text-white">New Spotlight Snap</p>
+                    <p class="text-xs text-white/50 mt-0.5">Send to Spotlight or Friends</p>
+                </div>
+                <button type="button" id="close-send-to"
+                    class="size-8 flex items-center justify-center rounded-full bg-white/10 border-0 cursor-pointer">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <div class="flex flex-col flex-1 min-h-0">
+                <div class="overflow-y-auto px-3 flex-1">
+                    <!-- My Spotlight Upload Section -->
+                    <p class="text-[11px] font-semibold tracking-wide text-white/40 uppercase px-2 pt-3 pb-1">Spotlight</p>
+                    <label class="flex items-center justify-between px-2 py-3 rounded-2xl hover:bg-white/5 cursor-pointer">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="avatar shrink-0">
+                                <div class="w-11 h-11 rounded-full overflow-hidden bg-gradient-to-tr from-[#FFFC00] to-orange-500 p-[3px]">
+                                    <div class="w-full h-full rounded-full bg-neutral-800 border-2 border-neutral-900 flex items-center justify-center">
+                                        <i class="fa-solid fa-circle-play text-white text-sm"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-sm font-semibold text-white">My Spotlight</p>
+                                <p class="text-xs text-white/40">Publish this snap to Spotlight</p>
+                            </div>
+                        </div>
+                        <input type="checkbox" id="post-to-spotlight-check"
+                            class="checkbox checkbox-sm border-white/30 checked:bg-[#FFFC00] checked:text-black checked:border-[#FFFC00]">
+                    </label>
+
+                    <p class="text-[11px] font-semibold tracking-wide text-white/40 uppercase px-2 pt-3 pb-1">Friends</p>
+                    {% if friends %}
+                    <ul class="space-y-0.5 pb-2">
+                        {% for friend in friends %}
+                        <li>
+                            <label
+                                class="flex items-center justify-between px-2 py-3 rounded-2xl hover:bg-white/5 cursor-pointer">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div class="avatar shrink-0">
+                                        <div
+                                            class="w-11 h-11 rounded-full overflow-hidden bg-neutral-700 ring-2 ring-violet-500 ring-offset-2 ring-offset-[#1a1a1a]">
+                                            <img src="{{ friend.avatar.url }}" alt="{{ friend.username }}"
+                                                class="object-cover w-full h-full">
+                                        </div>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-semibold text-white truncate">{{ friend.username }}</p>
+                                        <p class="text-xs text-white/40">Tap to select</p>
+                                    </div>
+                                </div>
+                                <input type="checkbox" name="friend_ids" value="{{ friend.id }}" form="send-snap-form"
+                                    class="friend-check checkbox checkbox-sm border-white/30 checked:bg-[#FFFC00] checked:text-black checked:border-[#FFFC00]">
+                            </label>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="flex flex-col items-center pt-8 text-center px-8 pb-10">
+                        <div class="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-3">
+                            <i class="fa-solid fa-user-plus text-white/50"></i>
+                        </div>
+                        <p class="text-sm font-semibold text-white">No friends yet</p>
+                        <p class="text-xs text-white/40 mt-1">Add friends to send snaps</p>
+                        <a href="{% url 'search-users' %}"
+                            class="btn btn-sm mt-5 rounded-full border-0 bg-[#FFFC00] text-black font-bold px-6">
+                            Find Friends
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="px-4 pb-7 pt-3 border-t border-white/10 bg-[#1a1a1a]">
+                    <button type="submit" form="send-snap-form" id="send-snap-btn"
+                        class="btn w-full rounded-full border-0 bg-[#FFFC00] hover:bg-[#F5F000] text-black font-bold h-12 cursor-pointer">
+                        Send Snap
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+<script src="{% static 'camera.js' %}"></script>
+{% endblock %}

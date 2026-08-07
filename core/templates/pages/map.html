@@ -1,0 +1,117 @@
+{% extends 'base.html' %} {% load static %} {% block main %}
+
+<div>
+  <div id="location-container" class="hidden">
+    {% for location in locations %}
+    <div class="friend-location">
+      <p>{{ location.username }}</p>
+      <p>{{ location.latitude }}</p>
+      <p>{{ location.longitude }}</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div
+    id="map"
+    style="position: absolute; top: 0; bottom: 64px; width: 100%"
+  ></div>
+</div>
+
+{% include 'components/bottom-navbar.html' %}
+
+<script>
+  (() => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const map = L.map("map", {
+          zoomControl: true,
+        }).setView([position.coords.latitude, position.coords.longitude], 15);
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "&copy; OpenStreetMap contributors",
+          maxZoom: 19,
+        }).addTo(map);
+
+        //--------------------------------------------------
+        // User Avatar Marker
+        //--------------------------------------------------
+
+       const myIcon = L.divIcon({
+    className: "",
+    html: `
+        <img
+            src="{{ request.user.avatar.url }}"
+            style="
+                width:50px;
+                height:50px;
+                border-radius:50%;
+                border:3px solid white;
+                object-fit:cover;
+                box-shadow:0 2px 8px rgba(0,0,0,.35);
+            "
+        >
+    `,
+    iconSize: [50, 50],
+    iconAnchor: [25, 50]
+});
+
+        const bounds = [];
+
+        const myMarker = L.marker(
+          [position.coords.latitude, position.coords.longitude],
+          {
+            icon: myIcon,
+          },
+        )
+          .addTo(map)
+          .bindPopup("<b>You</b>");
+
+        bounds.push([position.coords.latitude, position.coords.longitude]);
+
+        //--------------------------------------------------
+        // Friends
+        //--------------------------------------------------
+
+        document.querySelectorAll(".friend-location").forEach((node) => {
+          const username = node.children[0].textContent.trim();
+
+          const latitude = parseFloat(node.children[1].textContent);
+
+          const longitude = parseFloat(node.children[2].textContent);
+
+          if (isNaN(latitude) || isNaN(longitude)) {
+            return;
+          }
+
+          L.marker([latitude, longitude])
+            .addTo(map)
+            .bindPopup(`<b>${username}</b>`);
+
+          bounds.push([latitude, longitude]);
+        });
+
+        //--------------------------------------------------
+        // Fit all markers
+        //--------------------------------------------------
+
+        if (bounds.length > 1) {
+          map.fitBounds(bounds, {
+            padding: [60, 60],
+          });
+        }
+      },
+
+      (error) => {
+        console.error(error);
+
+        alert("Unable to access your location.");
+      },
+
+      {
+        enableHighAccuracy: true,
+      },
+    );
+  })();
+</script>
+
+{% endblock %}

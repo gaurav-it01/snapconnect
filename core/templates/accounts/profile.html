@@ -1,0 +1,511 @@
+{% extends 'base.html' %}
+{% block main %}
+{% load humanize %}
+
+<style>
+  /* Starry background animations */
+  .profile-header-bg {
+    background: linear-gradient(to bottom, #070c1e, #0c0c0c);
+    position: relative;
+    overflow: hidden;
+  }
+  .star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    animation: pulse 3s infinite alternate;
+    opacity: 0.6;
+  }
+  @keyframes pulse {
+    0% { transform: scale(0.8); opacity: 0.3; }
+    100% { transform: scale(1.2); opacity: 0.9; }
+  }
+  /* Custom scrollbar hiding */
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  /* Dark Leaflet map design */
+  #mini-map {
+    height: 140px;
+    width: 100%;
+    border-radius: 1.25rem;
+    z-index: 10;
+  }
+</style>
+
+<div class="h-full flex flex-col bg-[#0c0c0c] text-white overflow-y-auto scrollbar-none relative">
+  
+  <!-- Profile Header Starry Sky -->
+  <div class="profile-header-bg pt-4 pb-6 px-3 flex flex-col items-center relative w-full h-auto min-h-[295px]">
+    <!-- Starry Particles -->
+    <div class="star w-1 h-1 top-6 left-12"></div>
+    <div class="star w-[3px] h-[3px] top-12 right-20" style="animation-delay: 0.5s;"></div>
+    <div class="star w-[2px] h-[2px] top-28 left-28" style="animation-delay: 1.2s;"></div>
+    <div class="star w-1.5 h-1.5 top-16 left-3/4" style="animation-delay: 0.8s;"></div>
+    <div class="star w-[2px] h-[2px] top-32 right-12" style="animation-delay: 1.7s;"></div>
+
+    <!-- Header Navigation Controls -->
+    <div class="w-full flex justify-between items-center z-10 mb-2">
+      <a href="{% url 'home' %}" class="size-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white border-0 cursor-pointer">
+        <i class="fa-solid fa-chevron-left text-lg"></i>
+      </a>
+      
+      <!-- Yellow Share QR Badge -->
+      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/45 backdrop-blur-sm border border-white/10 cursor-pointer">
+        <div class="size-4 bg-[#FFFC00] rounded-sm flex items-center justify-center">
+          <i class="fa-brands fa-snapchat text-[10px] text-black"></i>
+        </div>
+        <span class="text-xs font-bold text-white tracking-wide uppercase">Share</span>
+      </div>
+
+      <div class="flex gap-2">
+        <button type="button" class="size-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white border-0">
+          <i class="fa-solid fa-shirt"></i>
+        </button>
+        <a href="{% url 'edit-username' %}" class="size-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white border-0">
+          <i class="fa-solid fa-gear"></i>
+        </a>
+      </div>
+    </div>
+
+    <!-- 3D Bitmoji / Avatar Graphic representation -->
+    <div class="relative flex flex-col items-center mt-2 z-10">
+      <div id="bitmoji-container" class="relative w-44 h-28 overflow-hidden transition-all duration-300 flex justify-center items-end">
+        <!-- SVG Mockup of 3D Bitmoji character with sunglasses flexing biceps as in the screenshot -->
+        <svg viewBox="0 0 160 140" class="w-full h-full drop-shadow-[0_8px_16px_rgba(0,0,0,0.5)]">
+          <!-- Body / Black shirt -->
+          <path d="M40,140 Q40,110 55,95 Q65,85 80,85 Q95,85 105,95 Q120,110 120,140 Z" fill="#181818" />
+          <path d="M80,85 L80,105" stroke="#2a2a2a" stroke-width="1.5" />
+          <!-- Nike swoosh mockup -->
+          <path d="M86,102 Q90,102 93,100 Q91,104 87,104 Z" fill="#666" />
+          <!-- Arms flexing -->
+          <!-- Left Arm -->
+          <path d="M45,98 Q30,85 30,70 Q30,55 45,55 Q52,55 52,65 L48,82 Z" fill="#181818" />
+          <circle cx="45" cy="55" r="9" fill="#e8c39e" /> <!-- skin fist -->
+          <!-- Right Arm -->
+          <path d="M115,98 Q130,85 130,70 Q130,55 115,55 Q108,55 108,65 L112,82 Z" fill="#181818" />
+          <circle cx="115" cy="55" r="9" fill="#e8c39e" /> <!-- skin fist -->
+          <!-- Head / Face -->
+          <path d="M60,65 Q60,35 80,35 Q100,35 100,65 Q100,85 80,85 Q60,85 60,65 Z" fill="#e8c39e" />
+          <!-- Hair (styled haircut) -->
+          <path d="M57,55 Q56,38 72,30 Q88,22 103,32 Q105,42 101,55 Q92,38 80,38 Q68,38 57,55 Z" fill="#2d2d2d" />
+          <!-- Glasses -->
+          <rect x="65" y="52" width="13" height="9" rx="2" fill="none" stroke="#2d2d2d" stroke-width="2.5" />
+          <rect x="82" y="52" width="13" height="9" rx="2" fill="none" stroke="#2d2d2d" stroke-width="2.5" />
+          <line x1="78" y1="56" x2="82" y2="56" stroke="#2d2d2d" stroke-width="2.5" />
+          <!-- Eyes -->
+          <circle cx="71" cy="56" r="2.5" fill="#333" />
+          <circle cx="88" cy="56" r="2.5" fill="#333" />
+          <!-- Smile -->
+          <path d="M73,70 Q80,76 87,70" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" />
+          <path d="M72,70 Q80,77 88,70" fill="none" stroke="#aa7a60" stroke-width="1" />
+          <!-- Headphones -->
+          <path d="M58,62 Q58,30 80,30 Q102,30 102,62" fill="none" stroke="#333" stroke-width="4" />
+          <rect x="54" y="55" width="8" height="20" rx="3" fill="#222" />
+          <rect x="98" y="55" width="8" height="20" rx="3" fill="#222" />
+        </svg>
+        
+        <!-- User avatar thumbnail overlapping on bottom left -->
+        <div class="absolute bottom-1.5 left-2 size-[68px] rounded-full overflow-hidden border-[3px] border-[#0c0c0c] bg-neutral-800 shadow-md">
+          <img src="{{ request.user.avatar.url }}" alt="avatar" class="w-full h-full object-cover">
+        </div>
+      </div>
+
+      <!-- User Identification -->
+      <div class="text-left w-full pl-6 mt-1 flex flex-col">
+        <h2 id="bitmoji-toggle-btn" class="text-xl font-bold text-white flex items-center gap-1.5 drop-shadow-md cursor-pointer select-none">
+          {% if request.user.first_name or request.user.last_name %}
+            {{ request.user.first_name }} {{ request.user.last_name }}
+          {% elif request.user.username == 'gaurav' %}
+            Gaurav Chauhan
+          {% else %}
+            {{ request.user.username|title }}
+          {% endif %}
+          <i id="arrow-icon" class="fa-solid fa-chevron-down text-xs text-white/60"></i>
+        </h2>
+        <span class="text-xs text-neutral-400 font-medium tracking-wide">
+          {{ request.user.username }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Accounts Segmented Control buttons -->
+    <div class="w-full grid grid-cols-2 gap-2.5 mt-5 px-3 z-10">
+      <button class="py-2.5 rounded-full border-[1.5px] border-white text-xs font-bold text-white bg-transparent active:scale-95 transition-all cursor-pointer">
+        My Account
+      </button>
+      <button class="py-2.5 rounded-full border-0 text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 active:scale-95 transition-all cursor-pointer">
+        Public Profile
+      </button>
+    </div>
+  </div>
+
+  <!-- Profile Content Body -->
+  <main class="flex-1 bg-[#0c0c0c] px-3.5 pb-24 space-y-5">
+    
+    <!-- Capsules Badges list row -->
+    <div class="flex gap-2 overflow-x-auto pb-1 pt-1 scrollbar-none">
+      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-neutral-900 border border-neutral-800 text-xs font-medium text-neutral-300 shrink-0">
+        <span>🎈</span>
+        <span>{{ request.user.date_joined|date:"M d" }}</span>
+        <i class="fa-solid fa-chevron-right text-[8px] text-neutral-500"></i>
+      </div>
+      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-neutral-900 border border-neutral-800 text-xs font-medium text-neutral-300 shrink-0">
+        <i class="fa-brands fa-snapchat text-[11px] text-teal-400"></i>
+        <span>{{ request.user.snap_score|intcomma }}</span>
+      </div>
+      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-neutral-900 border border-neutral-800 text-xs font-medium text-neutral-300 shrink-0">
+        <span>♊</span>
+        <span>Gemini</span>
+      </div>
+      <button class="flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#FFFC00] text-black text-xs font-bold shrink-0 border-0 cursor-pointer">
+        + Join School
+      </button>
+    </div>
+
+    <!-- Snapchat+ Premium card -->
+    <div class="relative rounded-2xl p-4 bg-gradient-to-r from-neutral-900 via-neutral-900 to-[#FFFC00]/5 border border-amber-500/25 flex items-center justify-between shadow-xl cursor-pointer group">
+      <div class="flex items-center gap-3.5">
+        <div class="size-11 rounded-full bg-transparent flex items-center justify-center shrink-0 border border-amber-500/30">
+          <i class="fa-brands fa-snapchat text-2xl text-amber-400 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]"></i>
+        </div>
+        <div class="min-w-0">
+          <h4 class="text-sm font-bold text-white flex items-center gap-1.5">
+            Snapchat+ 
+            <span class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-[#FFFC00] text-black uppercase tracking-wider">New Features</span>
+          </h4>
+          <p class="text-xs text-neutral-400 mt-0.5 truncate">Exclusive, experimental, and pre-release features.</p>
+        </div>
+      </div>
+      <i class="fa-solid fa-chevron-right text-neutral-500 text-xs group-hover:translate-x-0.5 transition-transform"></i>
+    </div>
+
+    <!-- Post to... Section -->
+    <div>
+      <div class="flex items-center justify-between mb-3 px-1">
+        <h3 class="text-sm font-bold text-neutral-300">Post to...</h3>
+        <button onclick="document.getElementById('add_spotlight_modal').showModal()"
+                class="btn btn-xs rounded-full border-0 bg-neutral-900 hover:bg-neutral-800 text-neutral-300 font-bold px-3 py-1 cursor-pointer">
+          <i class="fa-solid fa-plus text-[10px] mr-1"></i> New Spotlight
+        </button>
+      </div>
+
+      <div class="bg-neutral-900 rounded-2xl overflow-hidden divide-y divide-neutral-800 shadow-lg">
+        <!-- Spotlight Link -->
+        <div onclick="document.getElementById('add_spotlight_modal').showModal()" 
+             class="flex items-center justify-between p-3.5 hover:bg-neutral-800/50 transition-colors cursor-pointer group">
+          <div class="flex items-center gap-3">
+            <div class="size-10 rounded-full bg-red-950/40 flex items-center justify-center shrink-0">
+              <i class="fa-solid fa-circle-play text-red-500 text-lg"></i>
+            </div>
+            <div>
+              <p class="text-sm font-bold text-white">Spotlight</p>
+              <p class="text-xs text-neutral-400 mt-0.5">Reach millions of Snapchatters!</p>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right text-neutral-600 text-xs group-hover:translate-x-0.5 transition-transform"></i>
+        </div>
+
+        <!-- Add spotlight cover bubbles -->
+        <div class="p-3.5">
+          <p class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-2">My Spotlight Carousel</p>
+          {% if spotlights %}
+          <div class="flex gap-4 overflow-x-auto py-1 scrollbar-none">
+            {% for sp in spotlights %}
+            <div class="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer" 
+                 onclick="playSpotlight('{{ sp.file.url }}', '{{ sp.title }}')">
+              <div class="w-14 h-14 rounded-full overflow-hidden p-[2px] bg-gradient-to-tr from-[#FFFC00] to-orange-500">
+                <div class="w-full h-full rounded-full overflow-hidden bg-neutral-800 border-[1.5px] border-neutral-900 flex items-center justify-center">
+                  {% if '.mp4' in sp.file.name or '.webm' in sp.file.name or '.mov' in sp.file.name or '.ogg' in sp.file.name %}
+                    <i class="fa-solid fa-video text-orange-400 text-base"></i>
+                  {% else %}
+                    <img src="{{ sp.file.url }}" alt="cover" class="w-full h-full object-cover">
+                  {% endif %}
+                </div>
+              </div>
+              <span class="text-[10px] font-medium text-neutral-300 max-w-[8ch] truncate">{{ sp.title }}</span>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="flex flex-col items-center justify-center py-4 bg-neutral-950/40 rounded-xl border border-dashed border-neutral-800 text-center px-4">
+            <i class="fa-solid fa-film text-neutral-600 text-sm mb-1"></i>
+            <p class="text-[10px] text-neutral-500">No Spotlights uploaded yet.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Friends Section -->
+    <div>
+      <h3 class="text-sm font-bold text-neutral-300 mb-3 px-1">Friends</h3>
+      <div class="bg-neutral-900 rounded-2xl overflow-hidden divide-y divide-neutral-800 shadow-lg">
+        <a href="{% url 'search-users' %}" class="flex items-center justify-between p-3.5 hover:bg-neutral-800/50 transition-colors group">
+          <div class="flex items-center gap-3">
+            <div class="size-10 rounded-full bg-neutral-800 flex items-center justify-center shrink-0">
+              <i class="fa-solid fa-user-plus text-neutral-300 text-base"></i>
+            </div>
+            <div>
+              <p class="text-sm font-bold text-white">Add Friends</p>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right text-neutral-600 text-xs group-hover:translate-x-0.5 transition-transform"></i>
+        </a>
+
+        <a href="{% url 'home' %}" class="flex items-center justify-between p-3.5 hover:bg-neutral-800/50 transition-colors group">
+          <div class="flex items-center gap-3">
+            <div class="size-10 rounded-full bg-neutral-800 flex items-center justify-center shrink-0">
+              <i class="fa-solid fa-list text-neutral-300 text-base"></i>
+            </div>
+            <div>
+              <p class="text-sm font-bold text-white">My Friends</p>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right text-neutral-600 text-xs group-hover:translate-x-0.5 transition-transform"></i>
+        </a>
+      </div>
+    </div>
+
+    <!-- Communities Section -->
+    <div>
+      <h3 class="text-sm font-bold text-neutral-300 mb-3 px-1">Communities</h3>
+      <div class="bg-neutral-900 rounded-2xl overflow-hidden shadow-lg p-3.5 hover:bg-neutral-800/50 transition-colors flex justify-between items-center cursor-pointer group">
+        <div class="flex items-center gap-3">
+          <div class="size-10 rounded-full bg-neutral-800 flex items-center justify-center shrink-0">
+            <i class="fa-solid fa-graduation-cap text-neutral-300 text-base"></i>
+          </div>
+          <div>
+            <p class="text-sm font-bold text-white">Add School</p>
+            <p class="text-xs text-neutral-400 mt-0.5">Meet new friends and view your Community Story!</p>
+          </div>
+        </div>
+        <i class="fa-solid fa-chevron-right text-neutral-600 text-xs group-hover:translate-x-0.5 transition-transform"></i>
+      </div>
+    </div>
+
+    <!-- Snap Map Section -->
+    <div>
+      <h3 class="text-sm font-bold text-neutral-300 mb-3 px-1">Snap Map</h3>
+      <div class="bg-neutral-900 rounded-2xl overflow-hidden shadow-lg border border-neutral-800/80">
+        <!-- Leaflet map element -->
+        <div id="mini-map"></div>
+
+        <!-- Map status row -->
+        <div class="p-3.5 flex justify-between items-center hover:bg-neutral-800/50 transition-colors cursor-pointer group">
+          <div class="flex items-center gap-3">
+            <div class="size-10 rounded-full bg-neutral-800 flex items-center justify-center shrink-0">
+              <i class="fa-brands fa-snapchat text-neutral-300 text-base"></i>
+            </div>
+            <div>
+              <p class="text-sm font-bold text-white" id="sharing-status-title">Sharing Location</p>
+              <p class="text-xs text-neutral-400 mt-0.5" id="sharing-status-sub">Updating position in background</p>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right text-neutral-600 text-xs group-hover:translate-x-0.5 transition-transform"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Countdowns Section -->
+    <div>
+      <h3 class="text-sm font-bold text-neutral-300 mb-3 px-1">Countdowns</h3>
+      <div class="bg-neutral-900 rounded-2xl overflow-hidden shadow-lg p-3.5 hover:bg-neutral-800/50 transition-colors flex justify-between items-center cursor-pointer group">
+        <div class="flex items-center gap-3">
+          <div class="size-10 rounded-full bg-neutral-800 flex items-center justify-center shrink-0">
+            <i class="fa-regular fa-calendar-days text-neutral-300 text-base"></i>
+          </div>
+          <div>
+            <p class="text-sm font-bold text-white">Create a new Countdown!</p>
+            <p class="text-xs text-neutral-400 mt-0.5">Invite Friends or use privately</p>
+          </div>
+        </div>
+        <i class="fa-solid fa-chevron-right text-neutral-600 text-xs group-hover:translate-x-0.5 transition-transform"></i>
+      </div>
+    </div>
+
+    <!-- Actions Logout -->
+    <div class="pt-2">
+      <form action="{% url 'logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit"
+          class="btn btn-sm w-full rounded-full border border-neutral-800 bg-[#161616] hover:bg-neutral-800 text-red-500 font-semibold h-11 cursor-pointer">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          Log Out
+        </button>
+      </form>
+    </div>
+  </main>
+</div>
+
+<!-- Add Spotlight Dialog Modal -->
+<dialog id="add_spotlight_modal" class="modal bg-black/60 z-50">
+  <div class="modal-box bg-[#1a1a1a] text-white rounded-2xl border border-white/10 m-4">
+    <h3 class="font-bold text-lg">Create a Spotlight</h3>
+    <p class="text-xs text-white/50 mt-1">Upload a photo or a video reel to pin to Spotlight.</p>
+    
+    <form method="post" action="{% url 'add-spotlight' %}" enctype="multipart/form-data" class="mt-4">
+      {% csrf_token %}
+      <div class="form-control w-full">
+        <label class="label pt-0"><span class="label-text text-white/60 text-xs">Title</span></label>
+        <input type="text" name="title" placeholder="e.g. Summer vibes" required
+               class="input input-bordered w-full bg-neutral-800 border-white/10 text-white rounded-xl text-sm focus:outline-none">
+      </div>
+      
+      <div class="form-control w-full mt-3">
+        <label class="label"><span class="label-text text-white/60 text-xs">Select Image or Video reel</span></label>
+        <input type="file" name="file" accept="image/*,video/*" required
+               class="file-input file-input-bordered w-full bg-neutral-800 border-white/10 text-white rounded-xl text-sm">
+      </div>
+      
+      <div class="modal-action mt-6 flex gap-2 justify-end">
+        <button type="button" onclick="document.getElementById('add_spotlight_modal').close()"
+                class="btn btn-sm rounded-full border border-white/10 bg-transparent text-white hover:bg-white/5 font-semibold px-4 cursor-pointer">
+          Cancel
+        </button>
+        <button type="submit"
+                class="btn btn-sm rounded-full border-0 bg-[#FFFC00] hover:bg-[#F5F000] text-black font-bold px-5 cursor-pointer">
+          Create
+        </button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<!-- Fullscreen Spotlight Player Overlay -->
+<div id="spotlight-player" class="absolute inset-0 z-50 bg-black hidden flex flex-col justify-between p-3 cursor-pointer">
+  <div class="flex items-center justify-between w-full pt-2 px-1 z-30">
+    <span class="text-sm font-semibold text-white drop-shadow" id="spotlight-player-title"></span>
+    <button onclick="closeSpotlight(event)" class="size-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white border-0 cursor-pointer">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <div class="absolute inset-0 z-10 flex items-center justify-center bg-black" id="spotlight-media-container">
+    <!-- Rendered dynamically -->
+  </div>
+</div>
+
+<!-- Map Scripting -->
+<script>
+  (function () {
+    // Initial coordinates check
+    let userLat = parseFloat("{{ request.user.latitude }}");
+    let userLng = parseFloat("{{ request.user.longitude }}");
+    
+    // Default fallback coordinates if none exists yet
+    if (isNaN(userLat) || isNaN(userLng)) {
+      userLat = 28.6139; // Delhi center fallback
+      userLng = 77.2090;
+    }
+
+    // Initialize Map with dark theme tiles
+    const map = L.map("mini-map", {
+      zoomControl: false,
+      attributionControl: false
+    }).setView([userLat, userLng], 14);
+
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      maxZoom: 19
+    }).addTo(map);
+
+    // Dynamic marker using user avatar
+    const myIcon = L.divIcon({
+      className: "",
+      html: `
+        <div style="position: relative; width: 44px; height: 44px;">
+          <img src="{{ request.user.avatar.url }}" 
+               style="width: 44px; height: 44px; border-radius: 50%; border: 2.5px solid #FFFC00; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+          <div style="position: absolute; bottom: -2px; right: -2px; width: 12px; height: 12px; border-radius: 50%; bg-green-500 border: 2px solid white; background-color: #22c55e;"></div>
+        </div>
+      `,
+      iconSize: [44, 44],
+      iconAnchor: [22, 22]
+    });
+
+    const marker = L.marker([userLat, userLng], { icon: myIcon }).addTo(map);
+
+    // Watch position if permitted to center map
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        map.setView([lat, lng], 14);
+        marker.setLatLng([lat, lng]);
+        
+        document.getElementById("sharing-status-title").textContent = "Sharing Location";
+        document.getElementById("sharing-status-sub").textContent = "Updating position in background";
+      }, () => {
+        document.getElementById("sharing-status-title").textContent = "Ghost Mode";
+        document.getElementById("sharing-status-sub").textContent = "Location sharing disabled";
+      });
+    }
+
+    // Modal play functions
+    function playSpotlight(url, title) {
+      const player = document.getElementById("spotlight-player");
+      const titleVal = document.getElementById("spotlight-player-title");
+      const container = document.getElementById("spotlight-media-container");
+      
+      titleVal.textContent = title;
+      container.innerHTML = "";
+      
+      const lowercaseUrl = url.toLowerCase();
+      const isVideoCheck = lowercaseUrl.match(/\.(mp4|webm|mov|ogg)/) !== null || url.includes("spotlights");
+      
+      if (isVideoCheck) {
+        container.innerHTML = `<video src="${url}" autoplay loop playsinline class="w-full h-full object-contain" id="sp-video-element"></video>`;
+      } else {
+        container.innerHTML = `<img src="${url}" class="w-full h-full object-contain">`;
+      }
+      
+      player.classList.remove("hidden");
+      
+      player.onclick = (e) => {
+        if (e.target.tagName !== "BUTTON" && !e.target.closest("button")) {
+          closeSpotlight();
+        }
+      };
+    }
+    window.playSpotlight = playSpotlight;
+
+    function closeSpotlight(e) {
+      if (e) e.stopPropagation();
+      const player = document.getElementById("spotlight-player");
+      const container = document.getElementById("spotlight-media-container");
+      const video = document.getElementById("sp-video-element");
+      if (video) {
+        video.pause();
+      }
+      container.innerHTML = "";
+      player.classList.add("hidden");
+    }
+    window.closeSpotlight = closeSpotlight;
+
+    // Toggle Bitmoji Expand/Collapse
+    const toggleBtn = document.getElementById("bitmoji-toggle-btn");
+    const bitmojiContainer = document.getElementById("bitmoji-container");
+    const arrowIcon = document.getElementById("arrow-icon");
+
+    if (toggleBtn && bitmojiContainer && arrowIcon) {
+      arrowIcon.style.transition = "transform 0.3s ease";
+      toggleBtn.addEventListener("click", () => {
+        if (bitmojiContainer.classList.contains("h-28")) {
+          bitmojiContainer.classList.remove("h-28", "overflow-hidden");
+          bitmojiContainer.classList.add("h-36");
+          arrowIcon.style.transform = "rotate(180deg)";
+        } else {
+          bitmojiContainer.classList.remove("h-36");
+          bitmojiContainer.classList.add("h-28", "overflow-hidden");
+          arrowIcon.style.transform = "none";
+        }
+      });
+    }
+  })();
+</script>
+{% endblock %}

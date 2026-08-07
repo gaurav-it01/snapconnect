@@ -1,0 +1,322 @@
+{% extends 'base.html' %}
+{% block main %}
+{% load humanize %}
+<div class="h-full flex flex-col bg-white">
+  <div
+    class="absolute top-0 left-0 right-0 z-20 px-3 py-3 bg-white/95 backdrop-blur-sm border-b border-neutral-100 flex items-center gap-2">
+    <a href="{% url 'home' %}"
+      class="size-8 flex items-center justify-center rounded-full hover:bg-neutral-100 shrink-0">
+      <i class="fa-solid fa-chevron-left text-black"></i>
+    </a>
+
+    <a href="{% url 'chat-settings' chat.id %}" class="flex items-center gap-2.5 flex-1 min-w-0">
+      {% include 'components/avatar.html' with user=friend size='sm' ring='yes' %}
+      <div class="min-w-0">
+        <p class="item-title truncate leading-tight">{{ friend.username }}</p>
+        <p class="item-meta">
+          {% if chat.streak %}
+          <span class="text-orange-500 font-semibold">{{ chat.streak }}</span>
+          <i class="fa-solid fa-fire fa-xs" style="color: rgb(241, 99, 47);"></i>
+          {% else %}
+          Tap for settings
+          {% endif %}
+        </p>
+      </div>
+    </a>
+
+    <a href="{% url 'chat-settings' chat.id %}"
+      class="size-8 flex items-center justify-center rounded-full hover:bg-neutral-100 shrink-0">
+      <i class="fa-solid fa-gear text-neutral-500"></i>
+    </a>
+  </div>
+
+  <main id="chat-feed" class="absolute left-0 right-0 top-[64px] bottom-[76px] overflow-y-auto px-3 py-3">
+    {% if messages %}
+    <div id="chat-messages" class="min-h-full flex flex-col justify-end gap-3">
+      {% for message in messages %}
+      {% if message.is_system %}
+      <div class="uppercase text-center my-1 text-[10px] text-neutral-500 font-bold">
+        {% if request.user == message.sender %}
+        You took a screenshot of a chat
+        {% else %}
+        {{ message.text }}
+        {% endif %}
+      </div>
+      {% else %}
+      <div class="flex flex-col max-w-[78%]">
+        {% if message.sender_id == request.user.id %}
+        <p class="text-[10px] font-bold text-red-500 mb-1 tracking-wide">ME</p>
+        {% else %}
+        <p class="text-[10px] font-bold text-[#00B8FF] mb-1 tracking-wide">{{ message.sender.username|upper }}</p>
+        {% endif %}
+
+        {% if message.image %}
+        <div class="flex gap-1.5 items-stretch my-1" id="msg-container-{{ message.id }}">
+          <div
+            class="w-[3px] rounded-full shrink-0 {% if message.sender_id == request.user.id %}bg-red-500{% else %}bg-[#00B8FF]{% endif %}">
+          </div>
+          {% if message.is_viewed %}
+            <div class="flex items-center gap-2 py-2 px-3 bg-neutral-100 rounded-xl">
+              <i class="fa-regular fa-square text-red-500"></i>
+              <span class="text-xs font-semibold text-neutral-500">Opened Snap</span>
+            </div>
+          {% else %}
+            {% if message.sender_id == request.user.id %}
+              <div class="flex items-center gap-2 py-2 px-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                <i class="fa-solid fa-square-caret-right text-red-500"></i>
+                <span class="text-xs font-semibold text-neutral-600">Snap Sent</span>
+              </div>
+            {% else %}
+              <button type="button" 
+                      onclick="openSnap('{{ message.image.url }}', '{{ message.id }}')"
+                      class="flex items-center gap-2 py-2 px-4 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-sm transition-all active:scale-95 cursor-pointer border-0">
+                <i class="fa-solid fa-square text-white"></i>
+                <span class="text-xs font-bold uppercase tracking-wider">Tap to View</span>
+              </button>
+            {% endif %}
+          {% endif %}
+        </div>
+        {% endif %}
+
+        {% if message.text %}
+        <div class="flex gap-1.5 items-stretch">
+          <div
+            class="w-[3px] rounded-full shrink-0 {% if message.sender_id == request.user.id %}bg-red-500{% else %}bg-[#00B8FF]{% endif %}">
+          </div>
+          <p class="py-0.5 text-sm font-medium text-black break-all min-w-0">{{ message.text }}</p>
+        </div>
+        {% endif %}
+
+        <span class="item-meta pl-3 mt-0.5">{{ message.created_at|timesince }} ago</span>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+    {% else %}
+    <div id="empty-chat" class="h-full flex flex-col items-center justify-center text-center px-8">
+      <div class="mb-4">
+        {% include 'components/avatar.html' with user=friend size='xl' ring='yes' %}
+      </div>
+      <p class="item-title">Say hi to {{ friend.username }}</p>
+      <p class="item-meta mt-1">Send a chat or a snap to start</p>
+    </div>
+    <div id="chat-messages" class="flex flex-col gap-3"></div>
+    {% endif %}
+
+    <!-- Dynamic Typing Indicator animation -->
+    <div id="typing-indicator" class="hidden flex items-center gap-1.5 py-2 px-2 mt-2 bg-neutral-50 rounded-xl w-fit">
+      <div class="flex gap-1 items-center shrink-0">
+        <span class="size-1.5 rounded-full bg-[#00B8FF] animate-bounce"></span>
+        <span class="size-1.5 rounded-full bg-[#00B8FF] animate-bounce [animation-delay:0.2s]"></span>
+        <span class="size-1.5 rounded-full bg-[#00B8FF] animate-bounce [animation-delay:0.4s]"></span>
+      </div>
+      <span id="typing-text" class="text-xs text-neutral-500">friend is typing...</span>
+    </div>
+  </main>
+
+  <div class="absolute left-0 right-0 bottom-0 z-20 px-3 pb-3 pt-2 bg-white border-t border-neutral-100">
+    <div class="flex items-center gap-2">
+      <a href="{% url 'camera' %}?friend={{ friend.id }}"
+        class="size-11 rounded-full bg-black text-white flex items-center justify-center shrink-0">
+        <i class="fa-solid fa-camera"></i>
+      </a>
+      <form id="chat-form" class="flex-1 flex items-center gap-2 min-w-0">
+        <input id="message-input" name="message" type="text"
+          class="flex-1 h-11 rounded-full bg-neutral-100 border-0 px-4 text-sm outline-none focus:ring-2 focus:ring-neutral-300"
+          placeholder="Send a chat" autocomplete="off">
+        <button type="submit"
+          class="size-11 rounded-full bg-blue-500 text-white flex items-center justify-center shrink-0">
+          <i class="fa-solid fa-arrow-up"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Fullscreen Snap Viewer Overlay -->
+<div id="snap-viewer-overlay" class="fixed inset-0 z-50 bg-black hidden flex flex-col justify-center items-center cursor-pointer">
+  <div class="absolute top-4 right-4 text-white font-bold text-lg px-3 py-1 rounded-full bg-black/55 backdrop-blur-sm" id="snap-timer">
+    5
+  </div>
+  <img id="snap-viewer-img" src="" class="max-w-full max-h-full object-contain">
+</div>
+
+<script>
+  (function () {
+    const chatID = "{{ chat_id }}"
+    const socket = new WebSocket(`ws://${window.location.host}/ws/chat/${chatID}/`)
+    const form = document.getElementById("chat-form")
+    const feed = document.getElementById("chat-feed")
+    const messagesBox = document.getElementById("chat-messages")
+    const emptyChat = document.getElementById("empty-chat")
+    const input = document.getElementById("message-input")
+    const messageUserId = Number("{{ request.user.id }}")
+
+    function scrollToBottom() {
+      feed.scrollTop = feed.scrollHeight
+    }
+
+    function openSnap(url, msgId) {
+      const overlay = document.getElementById("snap-viewer-overlay");
+      const img = document.getElementById("snap-viewer-img");
+      const timerVal = document.getElementById("snap-timer");
+      
+      img.src = url;
+      overlay.classList.remove("hidden");
+      
+      let seconds = 5;
+      timerVal.innerText = seconds;
+      
+      const interval = setInterval(() => {
+        seconds--;
+        if (seconds <= 0) {
+          clearInterval(interval);
+          closeSnap();
+        } else {
+          timerVal.innerText = seconds;
+        }
+      }, 1000);
+      
+      function closeSnap() {
+        overlay.classList.add("hidden");
+        img.src = "";
+        clearInterval(interval);
+        socket.send(JSON.stringify({
+          "snap_viewed": true,
+          "message_id": Number(msgId)
+        }));
+      }
+      
+      overlay.onclick = () => {
+        closeSnap();
+      };
+    }
+    window.openSnap = openSnap;
+
+    function appendMessage(data) {
+      if (emptyChat) {
+        emptyChat.style.display = "none"
+      }
+
+      if (data.is_system) {
+        const div = document.createElement('div')
+        div.className = "uppercase text-center text-[10px] text-neutral-500 font-bold"
+        if (messageUserId === data.sender_id) {
+          div.innerText = "You took a screenshot of chat"
+        } else {
+          div.innerText = data.message
+        }
+        messagesBox.appendChild(div)
+        scrollToBottom()
+        return
+      }
+
+      const wrap = document.createElement("div")
+      wrap.className = "flex flex-col max-w-[78%]"
+
+      const sender = document.createElement("p")
+      sender.className = "text-[10px] font-bold mb-1 tracking-wide"
+
+      const row = document.createElement("div")
+      row.className = "flex gap-1.5 items-stretch"
+
+      const bar = document.createElement("div")
+      bar.className = "w-[3px] rounded-full shrink-0"
+
+      const text = document.createElement("p")
+      text.className = "py-0.5 text-sm font-medium text-black break-all min-w-0"
+      text.textContent = data.message
+
+      if (Number(data.sender_id) == messageUserId) {
+        sender.classList.add("text-red-500")
+        sender.textContent = "ME"
+        bar.classList.add("bg-red-500")
+      } else {
+        sender.classList.add("text-[#00B8FF]")
+        sender.textContent = data.sender_username.toUpperCase()
+        bar.classList.add("bg-[#00B8FF]")
+      }
+
+      row.appendChild(bar)
+      row.appendChild(text)
+      wrap.appendChild(sender)
+      wrap.appendChild(row)
+      messagesBox.appendChild(wrap)
+      scrollToBottom()
+    }
+
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data)
+      
+      if (data.type === "typing") {
+        const indicator = document.getElementById("typing-indicator");
+        const typingText = document.getElementById("typing-text");
+        if (Number(data.sender_id) !== messageUserId) {
+          if (data.is_typing) {
+            typingText.textContent = `${data.sender_username} is typing...`;
+            indicator.classList.remove("hidden");
+            scrollToBottom();
+          } else {
+            indicator.classList.add("hidden");
+          }
+        }
+        return;
+      }
+
+      if (data.type === "snap_viewed") {
+        const msgContainer = document.getElementById(`msg-container-${data.message_id}`);
+        if (msgContainer) {
+          msgContainer.innerHTML = `
+            <div class="w-[3px] rounded-full shrink-0 ${Number(data.sender_id) === messageUserId ? 'bg-red-500' : 'bg-[#00B8FF]'}"></div>
+            <div class="flex items-center gap-2 py-2 px-3 bg-neutral-100 rounded-xl">
+              <i class="fa-regular fa-square text-red-500"></i>
+              <span class="text-xs font-semibold text-neutral-500">Opened Snap</span>
+            </div>
+          `;
+        }
+        return;
+      }
+
+      appendMessage(data)
+    }
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault()
+      const value = input.value.trim()
+      if (!value || socket.readyState !== WebSocket.OPEN) {
+        return
+      }
+
+      socket.send(JSON.stringify({ message: value }))
+      input.value = ""
+      socket.send(JSON.stringify({ typing: false }))
+    })
+
+    // Typing indicator trigger
+    let typingTimeout;
+    input.addEventListener("input", () => {
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ typing: true }));
+      }
+      clearTimeout(typingTimeout);
+      typingTimeout = setTimeout(() => {
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ typing: false }));
+        }
+      }, 2000);
+    });
+
+    scrollToBottom()
+
+    function notifyscreenshot() {
+      socket.send(JSON.stringify({ "screenshot": true }))
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if ((e.metaKey && e.shiftKey) || (e.key == "PrintScreen")) {
+        notifyscreenshot()
+      }
+    })
+  }())
+</script>
+{% endblock %}

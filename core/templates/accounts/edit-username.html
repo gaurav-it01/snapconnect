@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block main %}
+<div class="h-full flex flex-col bg-white overflow-y-auto">
+  <div
+    class="absolute top-0 left-0 right-0 z-20 px-3 pt-3 pb-2 bg-white border-b border-neutral-100 flex items-center gap-3">
+    <a href="{% url 'profile' %}" class="size-8 flex items-center justify-center rounded-full hover:bg-neutral-100">
+      <i class="fa-solid fa-chevron-left text-black"></i>
+    </a>
+    <h1 class="page-title">Edit Username</h1>
+  </div>
+
+  <main class="mt-[60px] px-3 pb-6">
+    <p class="body-text mt-3 mb-4">
+      This is the name friends use to find you on Snapchat.
+    </p>
+
+    <form action="{% url 'edit-username' %}" method="post" class="space-y-3" novalidate>
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+      <div class="rounded-2xl bg-red-50 text-red-600 text-xs px-4 py-3">
+        {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+      </div>
+      {% endif %}
+
+      <div>
+        <label for="id_username" class="field-label ml-3 mb-1.5 block">Username</label>
+        <input type="text" name="username" id="id_username" required autocomplete="username"
+          value="{{ form.username.value|default_if_none:'' }}" placeholder="Username"
+          class="w-full h-11 rounded-full bg-neutral-100 border-0 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-300">
+        {% for error in form.username.errors %}
+        <p class="text-xs text-red-500 mt-1 ml-3">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div class="space-y-2 pt-4">
+        <button type="submit"
+          class="btn btn-sm w-full rounded-full border-0 bg-black hover:bg-neutral-800 text-white font-semibold h-10">
+          Save Username
+        </button>
+        <a href="{% url 'profile' %}"
+          class="btn btn-sm w-full rounded-full border border-neutral-200 bg-white text-black font-semibold h-10">
+          Cancel
+        </a>
+      </div>
+    </form>
+
+    <hr class="my-6 border-neutral-200">
+    
+    <div class="space-y-3">
+      <h3 class="field-label ml-3">App Appearance</h3>
+      <div class="flex items-center justify-between p-4 bg-neutral-50 rounded-2xl border border-neutral-100">
+        <div>
+          <p class="text-sm font-semibold text-black">Night Mode</p>
+          <p class="text-xs text-neutral-400 mt-0.5">Toggle between light theme and dark night theme</p>
+        </div>
+        <input type="checkbox" id="theme-toggle-check" class="toggle checked:bg-neutral-900 border-neutral-300">
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  (function() {
+    const check = document.getElementById("theme-toggle-check");
+    const currentTheme = localStorage.getItem("theme") || "light";
+    
+    if (currentTheme === "dark") {
+      check.checked = true;
+    }
+    
+    check.addEventListener("change", () => {
+      if (check.checked) {
+        localStorage.setItem("theme", "dark");
+        document.documentElement.classList.add("dark-theme");
+        document.documentElement.setAttribute("data-theme", "dark");
+      } else {
+        localStorage.setItem("theme", "light");
+        document.documentElement.classList.remove("dark-theme");
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    });
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block main %}
+<div class="h-full flex flex-col bg-white">
+  <div
+    class="absolute top-0 left-0 right-0 z-20 px-3 py-3 bg-white border-b border-neutral-100 flex items-center gap-3">
+    <a href="{% url 'home' %}" class="size-8 flex items-center justify-center rounded-full hover:bg-neutral-100">
+      <i class="fa-solid fa-chevron-down text-black"></i>
+    </a>
+    <h1 class="page-title">Friend Requests</h1>
+  </div>
+
+  <main class="mt-[64px] px-3 pb-8 overflow-y-auto">
+    <ul class="space-y-0.5">
+      {% for friend_request in friend_requests %}
+      <li class="flex items-center justify-between px-2 py-3 rounded-xl hover:bg-neutral-50">
+        <div class="flex items-center gap-3 min-w-0">
+          {% include 'components/avatar.html' with user=friend_request.from_user size='md' ring='yes' %}
+          <div class="min-w-0">
+            <h2 class="item-title truncate">{{ friend_request.from_user.username }}</h2>
+            <p class="item-meta">wants to be friends</p>
+          </div>
+        </div>
+        <form action="{% url 'accept-friend' friend_request.id %}" method="post" class="shrink-0">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm border-0 rounded-full bg-[#FFFC00] text-black font-semibold px-4">
+            Accept
+          </button>
+        </form>
+      </li>
+      {% empty %}
+      <div class="flex flex-col items-center pt-20 text-center px-8">
+        <div class="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center mb-3">
+          <i class="fa-solid fa-user-plus text-neutral-400"></i>
+        </div>
+        <p class="item-title">No friend requests</p>
+        <p class="item-meta mt-1">You're all caught up. New invites will show up here.</p>
+      </div>
+      {% endfor %}
+    </ul>
+  </main>
+</div>
+{% endblock %}

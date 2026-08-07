@@ -1,0 +1,25 @@
+<nav class="dock absolute bottom-0 left-0 right-0 h-20 bg-white text-neutral-500 border-t border-neutral-100">
+  <a href="{% url 'map-view' %}"
+    class="{% if request.resolver_match.url_name == 'map-view' %}dock-active text-black{% endif %}">
+    <i class="fa-solid fa-location-dot"></i>
+    <span class="dock-label">Map</span>
+  </a>
+
+  <a href="{% url 'home' %}"
+    class="{% if request.resolver_match.url_name == 'home' %}dock-active text-black{% endif %}">
+    <i class="fa-solid fa-message"></i>
+    <span class="dock-label">Chat</span>
+  </a>
+
+  <a href="{% url 'camera' %}"
+    class="{% if request.resolver_match.url_name == 'camera' %}dock-active text-black{% endif %}">
+    <i class="fa-solid fa-camera {% if request.resolver_match.url_name == 'camera' %}text-[#FFFC00]{% endif %}"></i>
+    <span class="dock-label">Camera</span>
+  </a>
+
+  <a href="{% url 'spotlight-feed' %}"
+    class="{% if request.resolver_match.url_name == 'spotlight-feed' %}dock-active text-black{% endif %}">
+    <i class="fa-solid fa-circle-play"></i>
+    <span class="dock-label">Spotlight</span>
+  </a>
+</nav>
