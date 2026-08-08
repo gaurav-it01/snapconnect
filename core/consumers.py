@@ -195,12 +195,31 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def _mark_snap_viewed(self, message_id, user_id):
         try:
-            message = Message.objects.get(pk=message_id, chat_id=self.chat_id)
-            if message.image and not message.is_viewed:
+            message = Message.objects.get(
+                pk=message_id,
+                chat_id=self.chat_id
+            )
+
+            # Only the receiver can view a snap.
+            if (
+                message.image
+                and not message.is_viewed
+                and message.reciever_id == user_id
+            ):
                 message.is_viewed = True
-                message.save(update_fields=["is_viewed"])
+                message.viewed_at = timezone.now()
+
+                message.save(
+                    update_fields=[
+                        "is_viewed",
+                        "viewed_at"
+                    ]
+                )
+
                 return True
         except Message.DoesNotExist:
             pass
+
         return False
+    
 

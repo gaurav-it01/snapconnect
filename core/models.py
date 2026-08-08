@@ -151,11 +151,11 @@ class Message(models.Model):
         related_name="sent_messages"
     )
 
-    receiver = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="received_messages"
-    )
+    reciever = models.ForeignKey(
+    settings.AUTH_USER_MODEL,
+    on_delete=models.CASCADE,
+    related_name="recieved_messages"
+)
 
     is_system = models.BooleanField(
         default=False
@@ -185,7 +185,7 @@ class Message(models.Model):
     )
 
     def __str__(self):
-        return f"Message {self.sender} -> {self.receiver}"
+        return f"Message {self.sender} -> {self.reciever}"
 
 
 

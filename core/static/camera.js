@@ -74,11 +74,31 @@ if (video && canvas && capture) {
     btn.addEventListener("click", (e) => {
       e.stopPropagation(); // prevent focusing caption text input
       filterBtns.forEach(b => {
-        b.classList.remove("bg-[#FFFC00]", "text-black", "font-semibold");
-        b.classList.add("bg-black/40", "text-white/70", "font-medium");
-      });
-      btn.classList.remove("bg-black/40", "text-white/70", "font-medium");
-      btn.classList.add("bg-[#FFFC00]", "text-black", "font-semibold");
+  b.classList.remove(
+    "bg-[#FFFC00]",
+    "text-black",
+    "font-semibold",
+    "selected-filter"
+  );
+
+  b.classList.add(
+    "bg-black/40",
+    "text-white/70",
+    "font-medium"
+  );
+});
+       btn.classList.remove(
+  "bg-black/40",
+  "text-white/70",
+  "font-medium"
+);
+
+btn.classList.add(
+  "bg-[#FFFC00]",
+  "text-black",
+  "font-semibold",
+  "selected-filter"
+);
       
       // Clear old filters
       video.classList.remove("filter-grayscale", "filter-sepia", "filter-warm", "filter-cool");
@@ -141,8 +161,11 @@ if (video && canvas && capture) {
     const ctx = canvas.getContext("2d");
 
     // Apply active filter to the captured canvas context
-    const activeFilterBtn = document.querySelector(".filter-btn.bg-[#FFFC00]");
-    const activeFilter = activeFilterBtn ? activeFilterBtn.dataset.filter : "none";
+
+    const activeFilterBtn = document.querySelector(".filter-btn.selected-filter");
+const activeFilter = activeFilterBtn
+  ? activeFilterBtn.dataset.filter
+  : "none";
     
     if (activeFilter === "grayscale") {
       ctx.filter = "grayscale(100%)";
